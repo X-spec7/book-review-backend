@@ -1,7 +1,6 @@
 import Fastify, { FastifyInstance } from "fastify";
 import fastifyCors from '@fastify/cors';
 import jwt from '@fastify/jwt';
-import pino from "pino";
 import rootRoutes from "./routes/root";
 
 export async function buildApp(): Promise<FastifyInstance> {
