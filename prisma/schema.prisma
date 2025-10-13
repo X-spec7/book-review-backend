@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  publisher
+  reader
+}
+
+model User {
+  id             String   @id @default(uuid())
+  first_name     String   @db.VarChar(20)
+  last_name      String   @db.VarChar(20)
+  role           Role
+  email          String   @unique @db.VarChar(100)
+  hashed_password String  @db.VarChar(255)
+  phone_number   String?  @db.VarChar(50)
+  address        String?  @db.VarChar(100)
+  avatar_image   String?  @db.VarChar(255)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  books          Book[]   @relation("PublisherBooks")
+  reviews        Review[] @relation("PublisherReviews")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(50)
+  description String?  @db.Text
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  books       Book[]
+}
+
+model Book {
+  id           String   @id @default(uuid())
+  publisher_id String
+  category_id  String
+  title        String   @db.VarChar(20)
+  description  String   @db.Text
+  banner_image String?  @db.VarChar(100)
+  approved     Boolean  @default(false)
+  file         String   @db.VarChar(255)
+  rating       Float?   @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  publisher User     @relation("PublisherBooks", fields: [publisher_id], references: [id])
+  category  Category @relation(fields: [category_id], references: [id])
+  reviews   Review[]
+
+  @@index([publisher_id])
+  @@index([category_id])
+}
+
+model Review {
+  id              String   @id @default(uuid())
+  book_id         String
+  publisher_id    String
+  review_content  String?  @db.Text
+  rating          Int
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  book      Book @relation(fields: [book_id], references: [id])
+  publisher User @relation("PublisherReviews", fields: [publisher_id], references: [id])
+
+  @@unique([book_id, publisher_id])
+}
