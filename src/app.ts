@@ -1,6 +1,7 @@
 import Fastify, { FastifyInstance } from "fastify";
 import fastifyCors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import cookie from '@fastify/cookie';
 import rootRoutes from "./routes/root";
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -24,8 +25,14 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await app.register(jwt, {
-    secret: process.env.JWT_SECRET || 'supersecret'
+    secret: process.env.JWT_SECRET || 'supersecret',
+    sign: { algorithm: 'HS256' }
   });
+
+  await app.register(cookie, {
+    secret: process.env.COOKIE_SECRET || 'super_secret_cookie', // optional for signed cookies
+    parseOptions: {} // you can add cookie parser options here
+  })
 
   await app.register(rootRoutes, { prefix: '/' });
 
