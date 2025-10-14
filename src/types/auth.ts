@@ -20,10 +20,6 @@ export interface RefreshRequestBody {
   refreshToken?: string; // may come from cookie instead
 }
 
-export interface LogoutRequestBody {
-  refreshToken?: string; // may come from cookie instead
-}
-
 // Responses
 export interface RegisterResponseBody {
   id: string;
@@ -61,5 +57,3 @@ export type RegisterApiResponse = ApiResponse<RegisterResponseBody>;
 export type RefreshApiResponse = ApiResponse<RefreshResponseBody>;
 export type LogoutApiResponse = ApiResponse<LogoutResponseBody>;
 export type MeApiResponse = ApiResponse<MeResponseBody>;
-
-

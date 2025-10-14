@@ -1,11 +1,8 @@
 export type ApiResponse<T> = {
-  data: T;
-  message?: string;
-};
-
-export type ErrorResponse = {
+  success: boolean;
+  statusCode: number;
   message: string;
-  code?: string;
+  data?: T;
 };
 
 export type PaginatedResult<T> = {
@@ -16,5 +13,3 @@ export type PaginatedResult<T> = {
   hasNext: boolean;
   hasPrev: boolean;
 };
-
-
