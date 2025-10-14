@@ -1,6 +1,7 @@
 import Fastify, { FastifyInstance } from "fastify";
 import fastifyCors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import sensible from '@fastify/sensible';
 import cookie from '@fastify/cookie';
 import rootRoutes from "./routes/root";
 
@@ -33,6 +34,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     secret: process.env.COOKIE_SECRET || 'super_secret_cookie', // optional for signed cookies
     parseOptions: {} // you can add cookie parser options here
   })
+
+  await app.register(sensible);
 
   await app.register(rootRoutes, { prefix: '/' });
 
