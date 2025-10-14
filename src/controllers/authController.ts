@@ -13,7 +13,7 @@ export class AuthController {
 
   constructor(fastify: FastifyInstance) {
     this.fastify = fastify;
-    this.service = new AuthService(fastify);
+    this.service = new AuthService(this.fastify);
   }
 
   register = async (
