@@ -21,20 +21,34 @@ enum Role {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  first_name     String   @db.VarChar(20)
-  last_name      String   @db.VarChar(20)
-  role           Role
-  email          String   @unique @db.VarChar(100)
-  hashed_password String  @db.VarChar(255)
-  phone_number   String?  @db.VarChar(50)
-  address        String?  @db.VarChar(100)
-  avatar_image   String?  @db.VarChar(255)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id              String   @id @default(uuid())
+  first_name      String   @db.VarChar(20)
+  last_name       String   @db.VarChar(20)
+  role            Role
+  email           String   @unique @db.VarChar(100)
+  hashed_password String   @db.VarChar(255)
+  phone_number    String?  @db.VarChar(50)
+  address         String?  @db.VarChar(100)
+  avatar_image    String?  @db.VarChar(255)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
-  books          Book[]   @relation("PublisherBooks")
-  reviews        Review[] @relation("PublisherReviews")
+  books         Book[]         @relation("PublisherBooks")
+  reviews       Review[]       @relation("PublisherReviews")
+  refresh_token RefreshToken[]
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  user_id     String
+  token_hash  String // hashed refresh token (argon2)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  revoked     Boolean  @default(false)
+  replaced_by String? // id of new token (for rotation)
+  created_at  DateTime @default(now())
+  expires_at  DateTime
+
+  @@index([user_id])
 }
 
 model Category {
@@ -44,7 +58,7 @@ model Category {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  books       Book[]
+  books Book[]
 }
 
 model Book {
@@ -69,14 +83,14 @@ model Book {
 }
 
 model Review {
-  id              String   @id @default(uuid())
-  book_id         String
-  publisher_id    String
-  review_content  String?  @db.Text
-  rating          Int
+  id             String  @id @default(uuid())
+  book_id        String
+  publisher_id   String
+  review_content String? @db.Text
+  rating         Int
 
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   book      Book @relation(fields: [book_id], references: [id])
   publisher User @relation("PublisherReviews", fields: [publisher_id], references: [id])
