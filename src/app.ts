@@ -3,7 +3,12 @@ import fastifyCors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import sensible from '@fastify/sensible';
 import cookie from '@fastify/cookie';
+import multipart from '@fastify/multipart';
+
 import rootRoutes from "./routes/root";
+import authRoutes from "./routes/auth";
+import prismaPlugin from './plugins/plugin';
+import authPlugin from './plugins/auth';
 
 export async function buildApp(): Promise<FastifyInstance> {
   // const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
@@ -37,7 +42,18 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(sensible);
 
+  await app.register(multipart, {
+    attachFieldsToBody: true, // optional; parses form fields into request.body
+    limits: {
+      fileSize: 10 * 1024 * 1024 // 10MB max
+    }
+  })
+
+  await app.register(prismaPlugin);
+  await app.register(authPlugin);
+
   await app.register(rootRoutes, { prefix: '/' });
+  await app.register(authRoutes, { prefix: '/auth' });
 
   app.get('/health', async () => {
     return { status: 'ok', time: new Date().toISOString() };
