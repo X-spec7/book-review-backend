@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, RouteGenericInterface } from 'fastify';
 import {
   hashPassword,
   verifyPassword,
@@ -6,11 +6,26 @@ import {
   hashRefreshToken,
   verifyRefreshTokenHash
 } from '../utils/auth';
+import {
+  RegisterRequestBody,
+  RegisterResponseBody,
+  LoginRequestBody,
+  LoginResponseBody,
+  RefreshRequestBody,
+  RefreshResponseBody,
+  LogoutRequestBody,
+  LogoutResponseBody,
+  MeResponseBody
+} from '../types/auth';
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   // register
-  fastify.post('/register', async (request, reply) => {
-    const { first_name, last_name, email, password, role } = request.body as any;
+  interface RegisterRoute extends RouteGenericInterface {
+    Body: RegisterRequestBody;
+    Reply: RegisterResponseBody | { message: string };
+  }
+  fastify.post<RegisterRoute>('/register', async (request, reply) => {
+    const { first_name, last_name, email, password, role } = request.body;
 
     // basic validation (enforce stronger in prod)
     if (!email || !password) return reply.code(400).send({ message: 'email and password required' });
@@ -28,8 +43,12 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // login (issue access + refresh)
-  fastify.post('/login', async (request, reply) => {
-    const { email, password } = request.body as any;
+  interface LoginRoute extends RouteGenericInterface {
+    Body: LoginRequestBody;
+    Reply: LoginResponseBody | { message: string };
+  }
+  fastify.post<LoginRoute>('/login', async (request, reply) => {
+    const { email, password } = request.body;
     const user = await fastify.prisma.user.findUnique({ where: { email } });
     if (!user) return reply.code(400).send({ message: 'Invalid credentials' });
 
@@ -68,7 +87,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // refresh endpoint (rotate refresh tokens)
-  fastify.post('/refresh', async (request, reply) => {
+  interface RefreshRoute extends RouteGenericInterface {
+    Body: RefreshRequestBody;
+    Reply: RefreshResponseBody | { message: string };
+  }
+  fastify.post<RefreshRoute>('/refresh', async (request, reply) => {
     // try cookie first
     const token = request.cookies?.[process.env.REFRESH_TOKEN_COOKIE_NAME || 'refresh_token'] || (request.body as any)?.refreshToken;
     if (!token) return reply.code(401).send({ message: 'No refresh token' });
@@ -125,7 +148,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // logout (revoke refresh token)
-  fastify.post('/logout', async (request, reply) => {
+  interface LogoutRoute extends RouteGenericInterface {
+    Body: LogoutRequestBody;
+    Reply: LogoutResponseBody;
+  }
+  fastify.post<LogoutRoute>('/logout', async (request, reply) => {
     const token = request.cookies?.[process.env.REFRESH_TOKEN_COOKIE_NAME || 'refresh_token'] || (request.body as any)?.refreshToken;
     if (!token) return reply.send({ ok: true }); // nothing to do
 
@@ -147,7 +174,10 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // me (protected)
-  fastify.get('/me', { preValidation: fastify.authenticate }, async (request, reply) => {
+  interface MeRoute extends RouteGenericInterface {
+    Reply: MeResponseBody | { message: string };
+  }
+  fastify.get<MeRoute>('/me', { preValidation: fastify.authenticate }, async (request, reply) => {
     const payload = (request as any).user;
     const user = await fastify.prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) return reply.code(404).send({ message: 'Not found' });
