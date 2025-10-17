@@ -2,13 +2,15 @@ import { ApiResponse } from './api';
 
 export type Role = 'admin' | 'publisher' | 'reader';
 
+export type UserRole = 'publisher' | 'reader'
+
 // Requests
 export interface RegisterRequestBody {
   first_name: string;
   last_name: string;
   email: string;
   password: string;
-  role: Role;
+  role: UserRole;
 }
 
 export interface LoginRequestBody {
