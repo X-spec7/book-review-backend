@@ -43,7 +43,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(sensible);
 
   await app.register(multipart, {
-    attachFieldsToBody: true, // optional; parses form fields into request.body
+    attachFieldsToBody: "keyValues",
     limits: {
       fileSize: 10 * 1024 * 1024 // 10MB max
     }

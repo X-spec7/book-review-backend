@@ -15,5 +15,3 @@ export const ERROR_MESSAGES = {
 export const SUCCESS_MESSAGES = {
   LOGOUT_OK: 'Logged out successfully'
 } as const;
-
-

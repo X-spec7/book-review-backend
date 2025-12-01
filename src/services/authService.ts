@@ -38,7 +38,7 @@ export class AuthService {
       data: { first_name, last_name, email, hashed_password, role }
     });
 
-    return { id: user.id, email: user.email };
+    return { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name };
   }
 
   async login(
@@ -60,7 +60,12 @@ export class AuthService {
     expiresAt.setDate(expiresAt.getDate() + Number(process.env.REFRESH_TOKEN_EXPIRY_DAYS || 30));
 
     await this.fastify.prisma.refreshToken.create({
-      data: { userId: user.id, tokenHash: refreshHash, expiresAt }
+      data: {
+        id: user.id,
+        token_hash: refreshHash,
+        expires_at: expiresAt,
+        user: { connect: { id: user.id } }
+      }
     });
 
     return { accessToken };
@@ -74,12 +79,12 @@ export class AuthService {
     if (!token) throw this.fastify.httpErrors.unauthorized(ERROR_MESSAGES.NO_REFRESH_TOKEN);
 
     const candidateTokens = await this.fastify.prisma.refreshToken.findMany({
-      where: { revoked: false, expiresAt: { gt: new Date() } }
+      where: { revoked: false, expires_at: { gt: new Date() } }
     });
 
     let found: any = null;
     for (const t of candidateTokens) {
-      if (await verifyRefreshTokenHash(t.tokenHash, token)) { found = t; break; }
+      if (await verifyRefreshTokenHash(t.token_hash, token)) { found = t; break; }
     }
     if (!found) throw this.fastify.httpErrors.unauthorized(ERROR_MESSAGES.INVALID_REFRESH_TOKEN);
 
@@ -91,7 +96,7 @@ export class AuthService {
     expiresAt.setDate(expiresAt.getDate() + Number(process.env.REFRESH_TOKEN_EXPIRY_DAYS || 30));
 
     await this.fastify.prisma.refreshToken.create({
-      data: { userId: found.userId, tokenHash: newHash, expiresAt, replacedBy: null }
+      data: { user_id: found.userId, token_hash: newHash, expires_at: expiresAt, replaced_by: null }
     });
 
     const user = await this.fastify.prisma.user.findUnique({ where: { id: found.userId } });
@@ -110,9 +115,9 @@ export class AuthService {
     const token = cookieToken;
     if (!token) return { ok: true };
 
-    const tokens = await this.fastify.prisma.refreshToken.findMany({ where: { revoked: false, expiresAt: { gt: new Date() } } });
+    const tokens = await this.fastify.prisma.refreshToken.findMany({ where: { revoked: false, expires_at: { gt: new Date() } } });
     for (const t of tokens) {
-      if (await verifyRefreshTokenHash(t.tokenHash, token)) {
+      if (await verifyRefreshTokenHash(t.token_hash, token)) {
         await this.fastify.prisma.refreshToken.update({ where: { id: t.id }, data: { revoked: true } });
         break;
       }
